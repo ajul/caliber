@@ -1,0 +1,38 @@
+# Main Acquisition Loop
+# Close EOS program berfore running
+# This program works!
+
+<DEFS>
+    # Device Definitions (must occur before Loop definitions) 
+	Gantry gan # Cornell Spherical Gantry
+	QCam cam # Canon 50D Camera
+#	InnerLoop 1 exposuresData.run   # Data image with different exposure.
+</DEFS>
+
+<PARAMS>
+	gan.cMin      -158.300
+	gan.cMax       161.900
+	gan.cOffset      1.800
+	gan.cVelocity   10.000
+	gan.bMin        -5.000
+	gan.bMax       365.000
+	gan.bOffset      1.200
+	gan.bVelocity   20.000
+	gan.lMin      -161.100
+	gan.lMax       159.100
+	gan.lOffset     -0.900
+	gan.lVelocity   10.000
+	gan.oMin      -720.000
+	gan.oMax       720.000
+	gan.oOffset     -1.310
+	gan.oVelocity   10.000
+	gan.waitTime     0.500
+    	cam.exposure      0.4
+</PARAMS>
+
+<COMMANDS>
+	# Command Header in format of dev.action pairs
+	gan.mb gan.mc gan.mo gan.ml
+    # Any number of command lines
+10 -120 0 -30
+</COMMANDS>
