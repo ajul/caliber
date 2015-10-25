@@ -13,7 +13,7 @@ if nargin < 1
     synSigma = 0;
 end
 
-cameraDataFiles = {'data/stereo_03/c_results.mat', 'data/stereo_03/m_results.mat'};
+cameraDataFiles = {'caliber_data/stereo_03/c_results.mat', 'caliber_data/stereo_03/m_results.mat'};
 
 % initOpt = caliber.fixedCameraSetPredict(cameraDataFiles, 2, 1);
 % 

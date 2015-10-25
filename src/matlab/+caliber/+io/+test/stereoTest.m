@@ -15,10 +15,10 @@ extrinsics = {1, {'r', 't'}, 1:3};
 extrinsics2 = {1:2, {'r', 't'}, 1:3};
 
 
-[ imagePoints_color1, worldPoints_color1, ~, ~, Q_color1, imageError_color1 ] = bouguet('data/stereo_test_00/color.mat', 1);
-[ imagePoints_gray1, worldPoints_gray1, ~, ~, Q_gray1, imageError_gray1 ] = bouguet('data/stereo_test_00/gray.mat', 1);
-[ imagePoints_color2, worldPoints_color2, K_color, kc_color, Q_color2, imageError_color2 ] = bouguet('data/stereo_test_00/color.mat', 2);
-[ imagePoints_gray2, worldPoints_gray2, K_gray, kc_gray, Q_gray2, imageError_gray2  ] = bouguet('data/stereo_test_00/gray.mat', 2);
+[ imagePoints_color1, worldPoints_color1, ~, ~, Q_color1, imageError_color1 ] = bouguet('caliber_data/stereo_test_00/color.mat', 1);
+[ imagePoints_gray1, worldPoints_gray1, ~, ~, Q_gray1, imageError_gray1 ] = bouguet('caliber_data/stereo_test_00/gray.mat', 1);
+[ imagePoints_color2, worldPoints_color2, K_color, kc_color, Q_color2, imageError_color2 ] = bouguet('caliber_data/stereo_test_00/color.mat', 2);
+[ imagePoints_gray2, worldPoints_gray2, K_gray, kc_gray, Q_gray2, imageError_gray2  ] = bouguet('caliber_data/stereo_test_00/gray.mat', 2);
 
 initOpt = InitOpt();
 

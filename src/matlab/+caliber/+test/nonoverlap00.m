@@ -15,10 +15,10 @@ if nargin < 1
     synSigma = 0;
 end
 
-f1 = 'data/nonoverlap05/D_Results.mat';
-f2 = 'data/nonoverlap05/M_Results.mat';
-f3 = 'data/nonoverlap05/C_Results.mat';
-f4 = 'data/nonoverlap05/R_Results.mat';
+f1 = 'caliber_data/nonoverlap05/D_Results.mat';
+f2 = 'caliber_data/nonoverlap05/M_Results.mat';
+f3 = 'caliber_data/nonoverlap05/C_Results.mat';
+f4 = 'caliber_data/nonoverlap05/R_Results.mat';
 
 [tree, initializer, optimizer] = caliber.special.nonoverlap({f1, f2, f3, f4}, 1:6, doLoocv);
 if synSigma > 0

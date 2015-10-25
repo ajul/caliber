@@ -23,11 +23,11 @@ data = cell(1, 5);
 Q = cell(numPositions, 5);
 imageError = cell(numPositions, 5);
 
-[imagePoints(:, 1), worldPoints(:, 1), Q(:, 1), data{1}] = bouguet('data/tablet02/cm_results.mat', 1:numPositions);
-[imagePoints(:, 2), worldPoints(:, 2), Q(:, 2), data{2}] = bouguet('data/tablet02/mm_results.mat', 1:numPositions);
-[imagePoints(:, 3), worldPoints(:, 3), Q(:, 3), data{3}] = bouguet('data/tablet02/cm_results.mat', (1:numPositions)+numPositions);
-[imagePoints(:, 4), worldPoints(:, 4), Q(:, 4), data{4}] = bouguet('data/tablet02/mm_results.mat', (1:numPositions)+numPositions);
-[imagePoints(:, 5), worldPoints(:, 5), Q(:, 5), data{5}] = bouguet('data/tablet02/t_results.mat', 1:numPositions);
+[imagePoints(:, 1), worldPoints(:, 1), Q(:, 1), data{1}] = bouguet('caliber_data/tablet02/cm_results.mat', 1:numPositions);
+[imagePoints(:, 2), worldPoints(:, 2), Q(:, 2), data{2}] = bouguet('caliber_data/tablet02/mm_results.mat', 1:numPositions);
+[imagePoints(:, 3), worldPoints(:, 3), Q(:, 3), data{3}] = bouguet('caliber_data/tablet02/cm_results.mat', (1:numPositions)+numPositions);
+[imagePoints(:, 4), worldPoints(:, 4), Q(:, 4), data{4}] = bouguet('caliber_data/tablet02/mm_results.mat', (1:numPositions)+numPositions);
+[imagePoints(:, 5), worldPoints(:, 5), Q(:, 5), data{5}] = bouguet('caliber_data/tablet02/t_results.mat', 1:numPositions);
 
 tree = caliber.tree.Tree();
 tree.addNode(caliber.node.GeneralNode('root', [], struct(), {}));

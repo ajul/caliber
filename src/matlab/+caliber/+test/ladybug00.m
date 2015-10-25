@@ -47,7 +47,7 @@ function [ tree, initializer, optimizer ] = ladybug00(synSigma, doLoocv)
     data = cell(size(cameras));
     
     for i = 1:numel(cameras)
-        filename = sprintf('data/ladybug00/results%d.mat', i);
+        filename = sprintf('caliber_data/ladybug00/results%d.mat', i);
         [imagePoints{i}, worldPoints{i}, Q{i}, data{i}] = caliber.io.bouguet(filename, 1:find(pointsetIndices(i, :), 1, 'last'));
         rawDistortion = data{i}.kc;
         numRawDistortion = numel(rawDistortion);

@@ -3,10 +3,10 @@ import caliber.math.projection.*
 import caliber.math.*
 import caliber.plot.*
 
-f1 = 'data/nonoverlap05/D_Results.mat';
-f2 = 'data/nonoverlap05/M_Results.mat';
-f3 = 'data/nonoverlap05/C_Results.mat';
-f4 = 'data/nonoverlap05/R_Results.mat';
+f1 = 'caliber_data/nonoverlap05/D_Results.mat';
+f2 = 'caliber_data/nonoverlap05/M_Results.mat';
+f3 = 'caliber_data/nonoverlap05/C_Results.mat';
+f4 = 'caliber_data/nonoverlap05/R_Results.mat';
 
 [optResiduals, predictResiduals] = caliber.nonoverlapLoocv({f2, f3, f4}, 1:6);
 

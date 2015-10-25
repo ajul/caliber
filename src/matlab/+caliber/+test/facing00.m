@@ -5,8 +5,8 @@ import caliber.math.projection.*
 import caliber.math.*
 import caliber.plot.*
 
-deviceFile1 = 'data/facing00/a_results.mat';
-deviceFile2 = 'data/facing00/d_results.mat';
+deviceFile1 = 'caliber_data/facing00/a_results.mat';
+deviceFile2 = 'caliber_data/facing00/d_results.mat';
 
 if nargin < 2
     doLoocv = 0;

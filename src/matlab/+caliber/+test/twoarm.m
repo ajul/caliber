@@ -65,7 +65,7 @@ angles = [10 -120 0 -30;...
 90 -30 0 0;...
 90 -60 0 0];
 
-datafile = 'data/cal2arms/merged_results.mat';
+datafile = 'caliber_data/cal2arms/merged_results.mat';
 
 % determine unique angles for each joint and convert to rigid
 % transformation matrices
