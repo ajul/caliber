@@ -1,0 +1,68 @@
+\section{Tweaks}
+\label{sec:tweaks}
+
+\subsection{Tweak specification}
+
+A tweak specification consists of a cell array, where each row contains four elements
+that specify one or more parameters that are allowed to vary during the optimization.
+Parameters are stored as matrices, which are themselves stored as elements of a \texttt{struct}.
+These are \texttt{struct}s are the \texttt{data} member of \texttt{Node} classes.
+
+\subsubsection{Node}
+The first element in each row specifies which node contains the parameter to be tweaked.
+This can be the name of the node, or a handle to the node itself.
+
+\subsubsection{Parameter name}
+The second element in each row specifies which field(s) of \texttt{node.data} can be modified.
+This can be a string to specify a single field, or a cell array of strings to specify multiple 
+fields at once.
+
+\subsubsection{Parameter index(es)}
+The third and fourth element in each row specifies which elements of \texttt{node.data.(parameterName)}
+are allowed to vary. If the fourth element is empty, only the third element is used; otherwise the 
+third element specifies the row and the fourth element the column. Both standard and logical indexing
+are permitted; if you use logical indexing, remember to cast the indexing array to a logical array first.
+You can also use the string \texttt{'all'}, which will select all elements (along that direction).
+
+\subsection{Tweak objects}
+Caliber uses the tweak specification to construct a \texttt{Tweak} object.
+
+\paragraph{\texttt{tweak.node}}
+
+A handle to the node that this tweak refers to.
+
+\paragraph{\texttt{tweak.paramName}}
+
+The parameter name that the tweak refers to. In other words, the tweak will
+affect elements of \texttt{tweak.node.data.(tweak.paramName)}.
+
+\paragraph{\texttt{tweak.paramIndices}}
+
+This is a matrix whose nonzero elements indicate values of \\
+\texttt{tweak.node.data.(tweak.paramName)} 
+which are allowed to vary during the optimization. The value of the $j$th such element is equal to $j$.
+For example, a camera matrix \texttt{'K'} whose focal length and principal point is allowed to vary
+would have \texttt{tweak.paramIndices} equal to
+
+\begin{center}\begin{tabular}{ccc}
+    1 & 0 & 3 \\
+    0 & 2 & 4 \\
+    0 & 0 & 0
+\end{tabular}\end{center}
+
+For the extrinsic parameters \texttt{'r'} and \texttt{'t'}, the \texttt{tweak.paramIndices} are of the form
+
+\begin{center}\begin{tabular}{c|cccc}
+	& \multicolumn{4}{c}{Node states} \\
+	& 1 & 2 & $\cdots$ & m \\
+	\hline
+	$x$ & ? & ? & $\cdots$ & ? \\
+	$y$ & ? & ? & $\cdots$ & ? \\
+	$z$ & ? & ? & $\cdots$ & ?
+\end{tabular}\end{center}
+
+\paragraph{\texttt{dValues = tweak.dValues()}}
+
+Returns a cell array. The $j$th element of the array gives the derivative of 
+\texttt{tweak.node.data} with respect to the $j$th nonzero element of \texttt{tweak.paramIndices}.
+This turns out to be equal to \texttt{tweak.paramIndices ==} $j$.

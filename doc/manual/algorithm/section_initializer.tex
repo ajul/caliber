@@ -1,0 +1,195 @@
+\section{Initializer algorithm}
+
+\subsection{Input and output}
+
+Caliber consists of two stages. The first stage is the initializer, which considers the following 
+input information:
+
+\begin{itemize}
+	\item A tree consisting of nodes $U$, with one node defined to be the root, and all other nodes
+		having a single parent such that the root is the ultimate ancestor of all nodes.
+	\item For each node $u$, an indexed set of states $u \colon 1 \ldots u \colon n$, 
+		each with an associated
+		rigid transformation $T_{u \colon i}$ relative to the node's parent. 
+		This transformation may be initially known or unknown.
+	\item A set of observations, defined by an estimated transformation $Q$ between a ``camera'' node
+		and a ``pointset'' node, 
+		a mapping $U \rightarrow \left\{u \colon 1 \ldots u \colon n \right\}$ defining 
+		the state of the tree for the camera node, and another such mapping defining the state
+		of the tree for the pointset node.
+\end{itemize}
+
+The result of the initializer is estimates for all initially unknown transformations $T_{u \colon i}$.
+
+\subsection{State-expanded graph}
+
+We do not solve the problem on the tree directly. Instead, we reduce the problem as stated
+above to a problem that uses a \textit{state-expanded graph}. It is this problem that we will
+call the initializer problem. An instance of this problem is defined as follows:
+Given a set of vertices $V$ and a set of constraints, assign a rigid transformation $T_i$ to each vertex
+such that all of the constraints are satisfied. (Define the first vertex to be the origin, so $T_0 = I$.)
+Equivalently, if we imagine a complete graph, we wish to 
+assign a rigid transformation to each ordered pair of vertices
+(henceforth known as ``edges'') such that the constraints are satisfied, 
+and the product of transformations around any cycle is the identity. 
+It is this second formulation that we will use in our algorithm.
+
+There are two types of expressible constraints in the initializer problem.
+
+\paragraph{Direct constraint.} 
+A constraint of this type restricts the transformation $T_{ij}$ 
+on an edge to be a particular value.
+
+\paragraph{Label constraint.} 
+A constraint of this type restricts the transformations of a set of edges
+to be equal to each other. Thus we can refer to this shared transformation as a label transformation.
+
+\subsubsection{State expansion}
+
+The state expansion that takes us from the tree representation to the state-expanded graph works as follows:
+
+\begin{itemize}
+	\item For each camera and pointset node and their respective states of each observation
+		start at the root node and walk down the path to the camera or pointset node.
+	\item For each node seen:
+	\begin{itemize}
+		\item Assign a graph vertex according to the following correspondence
+		\begin{align}
+			\text{tree node and a state index for each node on the path so far}
+			\leftrightarrow \text{graph vertex}
+		\end{align}
+		\item Add a constraint between the previous graph vertex on the path and the current vertex.
+			If the current node's state has a known transformation, create a direct constraint
+			with that transformation.
+			If the current node's state has a unknown transformation, create a label constraint
+			with the following correspondence:
+		\begin{align}
+			\text{tree node and a state index for that node}
+			\leftrightarrow \text{label}
+		\end{align}
+			Note that if we solve for the label transformation, we can easily write the result back
+			into the original tree using this correspondence.
+	\end{itemize}
+	\item Finally, for each observation, add a direct constraint between 
+	the camera and pointset graph vertices with the observation's estimated transformation.
+\end{itemize}
+
+Intuitively, the idea is that each vertex represents a point in the space of rigid transformations,
+and the constraints reflect the knowledge about the relationships between these points that 
+is implied by the tree. 
+
+\subsubsection{Secondary labels}
+In some cases, it may be easier to constrain the product of multiple labels and known transformations
+than any single label. Therefore, we allow for the introduction of ``secondary labels''. 
+Since there exists a unique path, and therefore a unique product of transformations, between any
+two vertices in a tree, we can introduce a secondary label for every (symbolically) unique product
+of transformations in the tree portion of the graph (i.e. all known and labeled edges in the graph,
+excluding known edges that came from observations). Since known edges are handled by the direct rule,
+we need only add secondary labels for paths that begin and end with edges with (primary) labels.
+
+Finally, it is usually sufficient to consider only 
+paths that are monotonically increasing in depth, which cuts down greatly on the number of secondary labels.
+
+\subsection{Core algorithm}
+
+With this problem reduction in hand, we can solve the problem on the graph to produce a solution 
+for our original tree. To do this, we apply a series of rules, each of which may produce an estimate
+of the transformation between some two vertices, until we have an estimate for every transformation
+in the graph.
+
+\subsubsection{Basic implications}
+
+The condition that the product of transformations around any cycle must equal the identity has two
+basic implications: $T_{ii} = I$ (each vertex frame is identical to itself), and $T_{ij} = T_{ji}^{-1}$
+(the inverse transformation between two frames is defined by the inverse of the transformation matrix).
+We do not consider these as distinct rules; instead we simply maintain these conditions when executing the
+rules that follow.
+
+\subsubsection{Direct rule}
+
+The condition that the product of transformations around any cycle must equal the identity also gives rise
+to our first rule, which we call the direct rule. It is sufficient to consider
+only triangle-closing, by which we mean that if we have a length-2 path of known transformations, we
+can estimate the transformation between the endpoints of the path as the product of those two transformations.
+The transformation that closes a longer cycle can then be estimated by applying triangle-closing 
+multiple times. Therefore, at the basic level, our direct rule performs this triangle-closing.
+
+A pictorial representation of triangle closing:
+
+\begin{align}
+	\xymatrix{
+	v_1 \ar[d]_A \ar@{-->}[dr]^{AB} & \\
+	v_2 \ar[r]_B & v_3 
+	}
+\end{align}
+
+Note that the arrows are only there to define which direction the transformation is referring to--this
+has no bearing on the connectivity of the graph, since the opposite direction simply has the 
+inverse of the transformation.
+
+We can express the direct rule as a block matrix multiplication. We maintain a block matrix $T$ whose
+blocks are 4x4 rigid transformations. The block $T_{ij}$ represents the rigid transformation
+between vertices $i$ and $j$. Transformations that are currently unknown have $T_{ij} = 0$.
+This is similar to an adjacency matrix, except instead of single binary entries indicating edges,
+we have transformation matrix blocks.
+
+The block elements of the product $T T = T^2$ are then:
+
+\begin{align}
+	T^2_{ij} = \sum_{k = 1}^n T_{ik} T_{kj} \approx n_{ij} T_{ij}
+\end{align}
+
+Each term in the sum is an estimate for the transformation $T_{ij}$ between $i$ and $j$ iff both 
+$T_{ik}$ and $T_{kj}$ are nonzero (that is, known), and zero otherwise. 
+$n_{ij}$ is the number of nonzero terms in the sum, 
+which can be read out directly from the 
+the bottom-right corner element (the homogeneous element) of $T^2_{ij}$. 
+As long as at least one term in the sum is nonzero, 
+$n_{ij} T_{ij}$ is in the same equivalence group as $T_{ij}$ since homogeneous coordinates are invariant 
+to scaling.
+
+\subsubsection{Label rule}
+
+If the direct rule is unable to make progress, we move on to the label rule. We look through all the labels,
+and if any of them has a edge with a known transformation, we set all other edges with the same label to
+have the same transformation.
+
+\subsubsection{AX = XB rule}
+
+If neither of the previous rules can be applied, we use our final rule, which relies on solving 
+systems of $AX = XB$ equations. After the direct rule is exhausted, every pair of vertices 
+that has a path of known edges between them has a edge between them. 
+Therefore, for every pair of edges with the same label $X$,
+we can quickly check there exist known edges such that the cycle forms an $AX = XB$ equation.
+Pictorially, the cycle corresponding to such an equation looks like this:
+
+\begin{align}
+	\xymatrix{
+	v_1 \ar[d]_A \ar@{-->}[r]^{X} & v_3 \ar[d]_B \\
+	v_2 \ar@{-->}[r]^{X}  & v_4 
+	}
+\end{align}
+
+Since labels can potentially appear many times in the graph, there may be multiple such cycles,
+each of which produces a different $AX = XB$ equation. Depending on the values of the $A$s and $B$s
+and the number of equations, the solution space for each label may have a different number of dimensions.
+In other words, some labels may be more constrained by their $AX = XB$ equations than others.
+We choose the most constrained label in each step; if it does not yield a unique solution, we choose a
+solution from the feasible space and report the number of degrees of freedom in the solution space.
+We then return to the direct rule.
+
+Note that this local analysis is not guaranteed to produce a correct solution even in case of exact 
+measurements, 
+nor to find a unique solution even if it exists. 
+However, if it reports zero degree of freedom total, the solution is guaranteed to be unique correct.
+In fact, we show later that the initializer problem is NP-hard, and it is also NP-hard to determine 
+whether there exist multiple solutions. Therefore, unless P = NP, 
+this implies that no polynomial-time algorithm
+(which ours is) can guarantee a correct solution in all cases.
+
+\subsection{Precision issues}
+Since measurements will never be perfectly accurate and floating-point arithmetic has only finite precision,
+in practice the problem and its solution. To address these issues, we use a least-squares solution at 
+each step if there is additional information available, and in each $AX = XB$ case (described later),
+we have some minimum tolerance for which we consider two vectors to be nonzero or nonparallel.
+

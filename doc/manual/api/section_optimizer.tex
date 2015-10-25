@@ -1,0 +1,23 @@
+\section{Optimizer}
+\label{sec:optimizer}
+
+\subsection{\texttt{caliber.opt.Optimizer}: optimizer stage}
+If you want to get more detailed information about the optimizer solution,
+you can query the \texttt{Optimizer} object directly.
+
+Information about the solution can be displayed using the following methods.
+
+\subsubsection{\texttt{printSolutionInfo}: print information on the optimizer solution}
+\texttt{printTweakInfo()}
+\paragraph{Overview.} This prints information on the optimizer solution.
+This is shown as a table with one row for each tweak. The columns are as follows:
+\begin{itemize}
+	\item \texttt{node}: The name of the node of the tweak.
+	\item \texttt{paramName}: As \texttt{tweaks} in \texttt{caliber.InitOpt.addNode}.
+	\item \texttt{paramValues}: The estimated value of the parameter. For rotations
+		this is the axis-angle representation of the rotation. Note that extrinsic
+        values are relative to their nodes' \texttt{baseM}s.
+\end{itemize}
+\paragraph{Inputs.} None.
+\paragraph{Outputs.} None.
+\paragraph{Remarks.}

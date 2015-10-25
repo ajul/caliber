@@ -1,0 +1,31 @@
+\section{Package structure}
+For those of you interested in how the code is laid out, here is a summary of Caliber's package structure:
+
+\subsection{Runnables}
+These subpackages are the highest-level code and are generally run from the command line.
+\subsubsection{\texttt{caliber.special}}
+This package contains functions for calibrating particular types of configurations, such as rigid camera clusters.
+\subsubsection{\texttt{test} subpackages}
+Subpackages named ``\texttt{test}'' generally contain Caliber scripts or unit tests. Most are out of date.
+
+\subsection{Core logic}
+These subpackages implement the core logic of caliber.
+\subsubsection{\texttt{caliber.tree}}
+This subpackage contains the \texttt{Tree} class, which defines the problem description.
+\subsubsection{\texttt{caliber.node}}
+This subpackage contains the abstract \texttt{Node} class and its default implementation \texttt{GeneralNode}.
+\subsubsection{\texttt{caliber.observation}}
+This subpackage contains the abstract \texttt{Observation} class and some subclasses.
+\subsubsection{\texttt{caliber.init}}
+This subpackage contains the initializer code.
+\subsubsection{\texttt{caliber.opt}}
+This subpackage contains the optimizer code.
+
+\subsection{Helper functions}
+These packages contain mostly small functions that are used in other parts of caliber.
+\subsubsection{\texttt{caliber.io}}
+Functions here help process input to Caliber, or produce non-graphical output.
+\subsubsection{\texttt{caliber.math}}
+Various mathematical functions.
+\subsubsection{\texttt{caliber.plot}}
+Functions here deal with graphical output.

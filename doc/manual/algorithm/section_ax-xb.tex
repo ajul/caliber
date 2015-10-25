@@ -1,0 +1,157 @@
+\section{AX = XB details}
+\label{sec:ax-xb_details}
+
+\subsection{Separation of rotation and translation}
+
+It is sometimes useful to separate the $AX = XB$ equation on full rigid transformations into its translational
+and rotational parts. This gives
+
+\begin{align}
+	R_A R_X = R_X R_B \label{eq:ax-xb_rotation} \\
+	\left(R_A - I \right) t_x = R_X t_b - t_a \label{eq:ax-xb_translation}
+\end{align}
+
+\subsection{Screw axes}
+
+It is also useful to observe that these equations describe a similarity transformation $B = X^{-1}AX$.
+Furthermore, Chen \cite{Chen1991} gives a method of characterizing $AX = XB$ systems using 
+screw theory. Briefly, screws are a way of representing rigid transformations. They consist of 
+a screw axis, which is a line in space, a translation magnitude along that axis, and a 
+rotation magnitude about that axis. Screws have the property that the translation and rotation magnitudes
+are invariant with rigid transformations, whereas the screw axis transforms with rigid transformations.
+Therefore, if we one or more $AX = XB$ equations, we can think of this problem as one where
+we attempt to find the transformation $X$ that takes the screw axes given by $A_1, A_2, \ldots$ 
+to those given by $B_1, B_2, \ldots$
+
+\subsection{Cases with rotation}
+
+\subsubsection{Nonparallel (skew or intersecting) screw axes (0 DoF)}
+
+Park and Martin \cite{Park1994} give a method to compute the unique answer in the case where the 
+screw axes are nonparallel and the rotation magnitudes are not near the identity or a 180-degree rotation 
+(so the screw axes are well-defined). If the problem is overconstrained by having more than two $AX = XB$
+equations, they give a least-square solution. In particular, they compute the rotational matrix that 
+transforms a $3 \times n$ matrix of vectors $\alpha$ to another one $\beta$ as
+
+\begin{align}
+	M = \beta \alpha^T \\
+	R = \left( M^T M \right)^{-\frac{1}{2}} M^T
+\end{align}
+
+\subsubsection{Parallel screw axes (1 DoF)}
+
+Chen \cite{Chen1991} shows that in the case where the screw axes are parallel but not coincident, 
+the rotation can be uniquely determined, but the translation has one degree of freedom.
+For two such pairs of rigid transformations $A_1, B_1$ and $A_2, B_2$, 
+we can construct an orthogonal using the (mutual)
+screw axis direction, the direction separating the two screw axes, and their cross product.
+We can then solve for the rotation as before. This is depicted in Figure \ref{fig:parallel-axis}.
+
+\begin{figure}
+\tdplotsetmaincoords{120}{60}
+\begin{center}
+\begin{tikzpicture}[tdplot_main_coords]
+	\draw[->] (0,0,0) -- (0,0,4) node[anchor=north west]{$A_1$};
+	\draw[->] (2,0,0) -- (2,0,4) node[anchor=north west]{$A_2$};
+	\draw (0,0,1.5) -- (0.5,0,1.5);
+	\draw (0.5,0,1) -- (0.5,0,1.5);
+	\draw (0,0,1.5) -- (0,-0.5,1.5);
+	\draw (0,-0.5,1) -- (0,-0.5,1.5);
+	\draw (0.5,0,1) -- (0.5,-0.5,1);
+	\draw (0,-0.5,1) -- (0.5,-0.5,1);
+	\draw[dashed, ->] (0,0,1) -- (2,0,1);
+	\draw[dashed, ->] (0,0,1) -- (0,-2,1);
+	
+	\tdplotsetrotatedcoords{40}{20}{70}
+	\coordinate (Shift) at (5,5,0);
+	\tdplotsetrotatedcoordsorigin{(Shift)}
+	
+	\draw[thick, shorten >=1cm,shorten <=2cm, ->] (0,0,1) -- (5,5,1) node[midway, above] {X};
+	
+	\draw[tdplot_rotated_coords, ->] (0,0,0) -- (0,0,4) node[anchor=north west]{$B_1$};
+	\draw[tdplot_rotated_coords, ->] (2,0,0) -- (2,0,4) node[anchor=north west]{$B_2$};
+	\draw[tdplot_rotated_coords] (0,0,1.5) -- (0.5,0,1.5);
+	\draw[tdplot_rotated_coords] (0.5,0,1) -- (0.5,0,1.5);
+	\draw[tdplot_rotated_coords] (0,0,1.5) -- (0,-0.5,1.5);
+	\draw[tdplot_rotated_coords] (0,-0.5,1) -- (0,-0.5,1.5);
+	\draw[tdplot_rotated_coords] (0.5,0,1) -- (0.5,-0.5,1);
+	\draw[tdplot_rotated_coords] (0,-0.5,1) -- (0.5,-0.5,1);
+	\draw[tdplot_rotated_coords, dashed, ->] (0,0,1) -- (2,0,1);
+	\draw[tdplot_rotated_coords, dashed, ->] (0,0,1) -- (0,-2,1);
+\end{tikzpicture}
+\end{center}
+\caption{Parallel screw axis frames.}
+\label{fig:parallel-axis}
+\end{figure}
+
+
+Since $R_A$ always has at least one eigenvalue of unity, 
+$\left(R_A - I \right)$ in the translation equation \ref{eq:ax-xb_translation} 
+has a one-dimensional null space, and the solution space has one degree of freedom.
+Since all the screws are parallel, this null space is the same for all of the equations.
+In this case, we attempt to keep the translation as close to the origin as possible,
+which we do by adding another row to the matrix $r_a' t_x = 0$.
+Finally, we stack the equations produced by each pair of $AX = XB$ equations to produce a single
+least-squares solution for $t_x$.
+
+Note that this gives an alternate method for solving the skew screw axis case: choose one screw axis
+as one direction, the direction along the shortest line between two screw axes as another, and their 
+cross product as the third. Since in this case the null space of $\left(R_A - I \right)$ for
+different equations are not the same, the translation has a unique solution.
+
+\subsubsection{Coincident screw axes (2 DoF)}
+
+In the coincident screw axis case, only one direction for the $A$s and for the $B$s can be determined;
+in this case we choose the rotation axis to be along the (average) cross product of the screw axes,
+which minimizes the rotation angle. We then solve for the translation as per the parallel axis case.
+
+\subsection{Cases without rotation}
+
+In some cases we may not have rotations at all; here the screw axis has direction equal to the translation
+but its offset perpendicular to the axis direction is undefined. 
+The rotation equation \label{eq:ax-xb_rotation} reduces to $R_X = R_X$, which gives us no information. 
+The left side of the translation equation \ref{eq:ax-xb_translation} is zero, which means that $t_x$
+cannot be determined at all, but there may be some information about $R_X$.
+
+\subsubsection{Nonparallel translation (3 DoF)}
+
+If the translations are nonparallel, we can use two non-parallel translations and their cross product to
+determine the rotation uniquely, as in the noncoincident screw axis cases. 
+As noted above, the translation is completely undetermined.
+
+\subsubsection{Parallel translation case (4 DoF)}
+
+Similarly, if we have only parallel translations, there is one degree of freedom. 
+We can use the same method as the coincident screw axis case to determine a feasible rotation.
+Again the translation is completely undetermined.
+
+\subsubsection{No information case (6 DoF)}
+
+If we have no information at all (no equations, or all $A$s and $B$s are the identity), then we
+simply guess $X$ to be the identity.
+
+\subsection{Omitted cases}
+
+There are some cases which we have omitted here:
+
+\subsubsection{180-degree rotations}
+
+Chen \cite{Chen1991} addresses the case where some or all of the rotations are 180 degrees.
+In these cases the rotation axis is defined, but only up to a binary choice between a direction
+and its reverse.
+
+\subsubsection{Mixed cases}
+
+Chen \cite{Chen1991} also addresses the cases where different equations fall into different cases;
+for example, one equation with rotation and one equation with only rotation. These cases
+are amenable to the previous sort of analysis.
+
+\subsubsection{Practical use}
+
+We have not covered these cases so far because they are rare in practical use. Typically, the $A$s and $B$s
+in the equations result from the relationship between two positions of a joint; this means 
+skew screw axes for a ball joint (or equivalent, such as a spherical gantry), 
+coincident screw axes for a revolute or cylindrical joint, and parallel translation for a prismatic joint;
+and the changes in the estimated transformations from the corresponding observations.
+Therefore, it is rare to find 180-degree rotations or mixed types of equations.
+However, they could be added without too much difficulty.

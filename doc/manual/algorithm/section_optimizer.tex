@@ -1,0 +1,182 @@
+\section{Optimizer algorithm}
+
+\subsection{Input and output}
+
+The optimizer takes the output of the initializer, which is basically the initializer tree but with 
+no unknown transformations, plus the following information:
+
+\begin{itemize}
+	\item For each node, a set of node data. This data can be any real matrices.
+	\item For each observation, a reprojection error function and its Jacobian.
+		For example, an conventional Bouguet-style observation's reprojection error
+		function would take the relative transformation between the camera and pointset nodes
+		and the intrinsics stored as the node data of the camera node, 
+		compute the reprojected image points, and compare them to the actually observed points.
+	\item A list of extrinsic parameters (rotation and translation of node states)
+		and node data that is allowed to vary.
+\end{itemize}
+
+The optimizer then seeks a least-squares 
+(in terms of the reprojection error across all observations) assignment of the parameters.
+
+\subsection{Extrinsics}
+
+\subsubsection{Parameterization}
+
+An extrinsic parameter is defined by the following:
+
+\begin{itemize}
+    \item An edge state---changes to this parameter will change the transformation associated with that edge state.
+    \item A parameter type, which for extrinsics is either rotation or translation.
+    \item An axis---either $x$, $y$, or $z$.
+\end{itemize}
+
+We use the axis-angle representation for rotations. 
+Rotations are special because the sum of two rotation vectors
+does not in general produce a vector that represents the 
+composition of the two rotations. Furthermore, the axis-angle 
+representation is best-behaved near the identity. 
+We parametrize the rotations as a second rotation relative
+to the rotation produced by the initializer. Since we expect the 
+initializer to produce a good estimate for the rotation, the 
+second rotation should stay close to the identity throughout the 
+optimization process.
+
+\subsubsection{Evaluation}
+
+Given a node state $s$, we can compute the transformation of that node relative
+to the root $M_s$ by taking the product of the transformation of the edge states
+defined by that node state on the path from the root to that node:
+
+\begin{align}
+    M_{\text{root} \rightarrow s} = 
+    \prod_{\text{edges $i$ on path root $\rightarrow s$}} M_i
+\end{align}
+
+If we have
+a camera node state $s$ and a pointset node state $t$, 
+we can then find the relative pose
+\begin{align}
+    M_{s \rightarrow t} = M_s^{-1} M_t
+\end{align}
+
+\subsubsection{Jacobian}
+
+A particular optimization parameter $x$ can only affect the extrinsics of an observation,
+and by extension the extrinsics of its points, if both of the following hold:
+\begin{itemize}
+    \item The parameter is an extrinsic parameter. Intrinsic parameters do not affect extrinsics.
+    \item The parameter refers to an edge state that is in the camera and/or pointset node state.
+		Otherwise, the parameter
+        refers to an entirely different camera and/or pointset node state, or to an edge that
+		does not affect the pose of either the camera or pointset.
+		Furthermore, if all edges above the closest common ancestor of the 
+		two nodes have the same state
+		in both the camera and pointset node states, and the parameter affects one of these edges,
+		the parameter has the
+		same effect on both the camera and pointset, and so does not affect the relative pose
+		between the two.
+\end{itemize}
+
+If either of these does not hold, the derivative of the relative camera-pointset transformation
+with respect to the parameter is zero.
+
+If the parameter does affect the relative camera-pointset transformation, 
+and all edges above the closest common ancestor of the two nodes have the same state
+in both the camera and pointset node states, we need only consider edges 
+on the path between the two nodes. 
+In this case each edge is traversed only once, so we can simply replace the 
+transformation of the affected edge state with its derivative:
+
+\begin{align}
+    \frac{dM_{s \rightarrow t}}{dx} = 
+    \prod_{\text{edges $i$ on path $s \rightarrow t$}}
+        \left\{ \begin{array}{ll}
+            \frac{dT_i^{-1}}{dx} & \text{if edge is traversed towards root} \\
+                & \text{and parameter refers to the edge state} \\
+            \frac{dT_i}{dx} & \text{if edge is traversed away from root} \\
+                & \text{and parameter refers to the edge state} \\
+            T_i^{-1} & \text{if edge is traversed towards root} \\
+                & \text{and parameter does not refer to the edge state} \\
+            T_i & \text{if edge is traversed away from root} \\
+                & \text{and parameter does not refer to the edge state}
+        \end{array} \right.
+\end{align}
+
+The derivative of the inverse of a matrix can be expressed 
+using the standard identity
+\begin{align}
+    \frac{dA^{-1}}{dx} = -A^{-1} \frac{dA}{dx} A^{-1}
+\end{align}
+
+In the more general case where the edges above the closest common ancestor of the two nodes
+do not have the same states, we can find the derivatives of the product of transformations
+from the root to the camera and pointset nodes $\frac{dM_s}{dx}$ and $\frac{dM_t}{dx}$,
+then use the product rule to obtain
+\begin{align}
+    \frac{dM_{s \rightarrow t}}{dx} = \frac{dM_s^{-1}}{dx} M_t + M_s^{-1} \frac{dM_t}{dx}
+\end{align}
+
+\subsection{Node data (intrinsics)}
+
+With the extrinsics settled, we now move on to node data, which can be used to describe
+camera intrinsics, among other things.
+
+\subsubsection{Parameterization}
+
+We parameterize the elements of the node data matrices directly; any element of these 
+matrices can be allowed to vary.
+
+\subsubsection{Evaluation}
+
+A particular observation reprojection function can take 
+the relative transformation (or its Jacobian, for the Jacobian computation) as an input.
+Typically, the reprojection function will then use node data from the camera node to 
+compute the reprojection error.
+
+\subsubsection{Jacobian}
+
+Often the reprojection is a composition 
+of functions of the form
+\begin{align}
+    \mathbf{y} & = f_i \left( \mathbf{x} \right)  \notag \\
+    & = g_n \left( X_n, g_{n-1} \left( X_{n-1},  \ldots g_1 \left( X_1,  \mathbf{x} \right) \ldots \right) \right)
+\end{align}
+where the $j$th nested intrinsic function $g_j$ takes the result of the previous function $\mathbf{y}_{j-1}$ and 
+uses it and some value $X_j$ to compute the result $\mathbf{y}_j$. 
+
+In the conventional reprojection function we have the intrinsic functions outlined in Table \ref{tab:intrinsic_functions}.
+
+\begin{table}[h]
+    \begin{center}
+        \caption{Intrinsic functions }
+        \begin{tabular}{r|p{90mm}|p{25mm}}
+            $j$ & $g_j$ & $X_j$ \\
+            \hline
+            1 & projection onto the image plane at unit distance in the camera's frame (multiplication by $M_s$ and division by the $z$ coordinate) & $M_s$ \\
+            2 & radial distortion ($L$) & $\kappa = \left\{ \kappa_1, \kappa_2, \ldots \right\}$ \\
+            3 & multiplication by the camera matrix ($K$) & $K$
+        \end{tabular}
+        \label{tab:intrinsic_functions}
+    \end{center}
+\end{table}
+
+By the chain rule, and noting that each intrinsic parameter $x$ affects at most one of the values
+$X_k$, the derivative of an intrinsic function with respect to $x$ is given by
+
+\begin{align}
+    \frac{d\mathbf{y}_{j}}{dx} & = \frac{d}{dx} g_j \left(X_j, \mathbf{y}_{j-1} \right) \\
+    & = 
+    \left\{ \begin{array}{ll}
+        \frac{dg_j \left(X_j, \mathbf{y}_{j-1} \right)}{dX_j} \frac{dX_j}{dx} 
+        & \text{if } k = j \\
+        \frac{dg_j \left(X_j, \mathbf{y}_{j-1} \right)}{d\mathbf{y}_{j-1}} \frac{d\mathbf{y}_{j-1}}{dx} 
+        & \text{if } k < j \\
+        0 & \text{otherwise}
+    \end{array} \right.
+\end{align}
+
+$\frac{dX_j}{dx}$ is typically a constant matrix, or in the case of the extrinsic matrix, 
+computed as previously described.
+$\frac{d\mathbf{y}_{j-1}}{dx}$ can be computed inductively, with the base case $\mathbf{y}_0$ 
+referring to the observed points $\mathbf{x}$ themselves.

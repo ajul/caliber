@@ -1,0 +1,122 @@
+\section{Introduction}
+\subsection{Purpose}
+
+One way to think of Caliber is as as camera calibration system. Consider the 
+calibration of a single conventional camera using known feature points.
+
+The basic single-camera problem can be described as follows: Suppose we have a set of images from 
+a single camera of a set of worldspace points (a \textit{pointset}). The  
+relationships of the points in the pointset to each other are known--for 
+example, the grid intersections of a checkerboard of known square size. 
+Using this information, and the corresponding image features in the photographs, 
+we can answer the following 
+questions:
+\begin{itemize}
+	\item What are the \textit{intrinsics} of the camera? These include the following:
+		\begin{itemize}
+			\item The \textit{focal length} of the camera in pixels. 
+				For digital cameras, this is determined
+				by the resolution and field of view (modulo any distortion).
+			\item The \textit{principal point} of the camera. This is the point in the image
+				that matches where the camera is ``pointing'', which may not be exactly the 
+				same as the center of the image (though it is usually close).
+			\item The \textit{distortion} of the camera. In particular, \textit{radial distortion}
+				is often of interest, and is modeled as a displacement of image points
+				by an even polynomial relative to an undistorted image. The (first few)
+				coefficients of this polynomial are then taken to describe the radial distortion.
+		\end{itemize}
+	\item What are the \textit{extrinsics} of the camera? These can be described using a linear 
+			\textit{transformation} matrix.
+		\begin{itemize}
+			\item What is the position of the camera center relative to each pointset?
+			\item What is the orientation of the camera relative to each pointset?
+		\end{itemize}
+\end{itemize}
+We can characterize the quality of a solution to these questions by comparing the image points 
+the solution predicts to the actual observed image points. This is called \textit{reprojection error};
+taking the reprojection error over all image points allows us to define an objective function, and
+thus a definition of an optimal solution in a least-squares sense.
+
+The problem of finding this optimal solution is well-studied, resulting in such systems as 
+Bouguet's popular calibration toolbox \\
+(\texttt{http://www.vision.caltech.edu/bouguetj/calib\_doc/}).
+However, more complex scenarios can easily be envisioned. For example:
+
+\begin{itemize}
+	\item What if there are multiple cameras, and something is known about their relative geometry?
+	\item What if more than one pointset appears in a single image?
+	\item What if the camera(s) and/or pointset(s) are mounted on robot arms, where the mounting 
+		transformation is unknown, but the arm transformations are known?
+	\item What if there are multiple devices with both cameras and pointsets 
+		(e.g. laptop or tablet computers that have integral cameras and are capable of displaying
+		an image of a checkerboard on their screens)?
+\end{itemize}
+
+We could use single-camera calibration on each camera independently to calibrate these scenarios. 
+However, this approach has a couple major shortcomings:
+\begin{itemize}
+	\item These known constraints on the extrinsics cannot be expressed directly, 
+		and thus the solution may violate these constraints. 
+	\item If the constraints are applied after the fact, the solution may 
+		no longer be optimal.
+	\item A satisfactory process of applying the constraints after the fact may be non-obvious 
+		and/or tedious to determine, especially for complex or novel scenarios.
+	\item Transformations that do not correspond directly to observations (e.g. between
+		two pointsets, two cameras, a camera and a robot joint, etc.) cannot be determined directly.
+		Again, it may be non-obvious and/or tedious to determine these transformations,
+		especially in an optimal sense.
+\end{itemize}
+
+This is the purpose of Caliber. It allows the user to input a set of single-camera calibrations 
+and a description of constraints, and produces an optimal solution that respects those constraints,
+as well as values for all transformations.
+
+\subsection{Requirements}
+In addition to the Caliber code itself, you will need the following to perform a calibration:
+\begin{itemize}
+	\item MATLAB 7.7 (R2008b) or later. (This implementation uses the \texttt{containers.Map} class.)
+		The Parallel Computing Toolbox will help speed up computations.
+	\item Estimated intrinsic parameters for all cameras: 
+		focal length, principal point, radial distortion coefficients.
+	\item Estimated relative camera-pointset extrinsics (poses) for each image.
+	\item Knowledge about the geometric structure of the system, expressed in a tree structure.
+	\item If you wish to calibrate a non-conventional camera, you will need to implement its
+		projection function and its Jacobian.
+		as an extension of the \texttt{Observation} abstract class.
+\end{itemize}
+The intrinsics and extrinsics can be generated using Bouguet's calibration toolbox \\
+(\texttt{http://www.vision.caltech.edu/bouguetj/calib\_doc/}). If you have a different calibration system
+that can produce similar data, that can be used as well, though at current Caliber only has specific code
+for Bouguet.
+
+\section{Tree structure}
+
+In Caliber, the constraints on the extrinsics are expressed using a tree structure. A tree
+is constructed as follows:
+
+\begin{itemize}
+	\item The tree has an implicit root node, representing the ``laboratory frame'' of the system.
+	\item The user adds nodes to the tree. Each node may represent a camera, pointset, or robot joint.
+		For example, if a camera is mounted on a robot arm, you might attach a node representing
+		the robot arm to the root, then attach a node representing the camera to that node.
+	\item Each node has a number of states representing different transformations relative to its parent. 
+		For example, if you moved the robot arm to three 
+		different positions throughout the course of your measurements, the robot arm node would
+		have three states. If the camera stayed attached the same way to the robot arm for the entire
+		time, then it would have just a single state.
+	\item Each state has an associated transformation, which may be known or unknown. For example,
+		if your robot arm had an encoder that told you where it was relative to the root,
+		each of its three states would have a known transformation. If you didn't know exactly how the
+		camera was mounted on the robot arm, that camera node's (sole) 
+		state would have an unknown transformation. Unknown transformations may have an initial estimate,
+		or they may be completely unknown.
+	\item For camera nodes, each state also has associated intrinsic information for that camera.
+	\item Each state has information about which intrinsic and extrinsic parameters of that
+		state are allowed to vary during the course of the optimization and which are constrained 
+		to their given values.
+	\item Once the tree has been defined, observations are defined by their camera and pointset nodes,
+		the worldspace points in the pointset frame and their corresponding image points,
+		and the state of all nodes in the tree when that photograph was taken. The optimization
+		process also requires an initial estimate of the relative camera-pointset transformation,
+		which can be computed by Bouguet.
+\end{itemize}

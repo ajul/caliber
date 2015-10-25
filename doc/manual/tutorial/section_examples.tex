@@ -1,0 +1,144 @@
+\section{Examples}
+
+In order to give a more concrete understanding, we will give some examples of calibration code.
+
+\subsection{Stereo pair}
+
+Our first example is a stereo pair calibration. Suppose we have ran Bouguet on the two cameras separately for each of 
+$n$ images, and the results are stored in \texttt{Calib\_results1.mat} and \texttt{Calib\_results2.mat}.
+
+First, we would read out the results from the result files:
+
+\begin{verbatim}
+indices = 1:n;
+[imagePoints1, worldPoints1, Q1, data1] = ...
+    caliber.io.bouguet('Calib_results1.mat', indices);
+[imagePoints2, worldPoints2, Q2, data2] = ...
+    caliber.io.bouguet('Calib_results2.mat', indices);
+\end{verbatim}
+
+\texttt{data1} and \texttt{data2} are structs, each containing the intrinsic information produced
+by Bouguet.
+
+Then, we can start constructing the tree. We begin by constructing a new \texttt{Tree} instance:
+
+\begin{verbatim}
+tree = caliber.tree.Tree();
+\end{verbatim}
+
+Supposing that we want to put camera1
+at the origin, we would add a node for camera1:
+
+\begin{verbatim}
+
+tree.addNode(caliber.node.GeneralNode('camera1', [], data1, {}));
+\end{verbatim}
+
+\texttt{caliber.node.GeneralNode} is the default implementation of a Caliber node.
+It allows you to specify a list of known and unknown transformations.
+The first node is the root of the tree, and thus has no parent or states.
+
+After this first node is added, our tree looks like this:
+
+\centerline{\xymatrix{
+\mathrm{camera1}
+}}
+
+Now we add camera2:
+
+\begin{verbatim}
+
+tree.addNode(caliber.node.GeneralNode('camera2', 'camera1', data2, {[]}));
+\end{verbatim}
+
+Here we have added a node for camera2 as a child of camera1. 
+Note that the last
+argument is a cell array with a single \texttt{[]} element, 
+indicating that the transformation matrix is unknown, 
+and that we would
+like Caliber to find it. 
+
+The tree now looks like this:
+
+\centerline{\xymatrix{
+\mathrm{camera1} \ar[d] \\
+\mathrm{camera2}
+}}
+
+The last node we have to add is the pointset node:
+
+\begin{verbatim}
+
+tree.addNode(caliber.node.GeneralNode('pointset', 'root', struct(), cell(n)));
+\end{verbatim}
+
+Since only cameras have intrinsics, we pass an empty struct for the node's data.
+Since the pointset was in a different position for each pair of photographs, its node has $n$ states.
+
+The tree with all the nodes added looks like this:
+
+\centerline{\xymatrix{
+\mathrm{camera1} \ar[d] \ar[r] & \mathrm{pointset} \\
+\mathrm{camera2}
+}}
+
+The last step before solving is to add the observations.
+
+\begin{verbatim}
+for i = 1:n
+    observation = caliber.observation.IndependentObservation(...
+        'camera1', 'pointset', imagePoints1{i}, worldPoints1{i},...
+        Q1{i}, Map({'pointset'}, {i}));
+    tree.addObservation(observation);
+    observation = caliber.observation.IndependentObservation(...
+        'camera2', 'pointset', imagePoints2{i}, worldPoints2{i},...
+        Q2{i}, Map({'pointset'}, {i}));
+    tree.addObservation(observation);
+end
+\end{verbatim}
+
+We construct an observation object for each pointset state using the appropriate information,
+and add those to the system. 
+In this case we use \texttt{IndependentObservation}, which can represent Bouguet-style observations.
+The last argument to the constructor tells Caliber that the pointset was
+in state $i$ when that observation was taken. Note that only the pointset node was explicitly assigned
+a state--nodes not explicitly assigned a state are assumed to be in their first state.
+
+Pictorially, we may represent the observations as dashed arrows:
+
+\centerline{\xymatrix{
+\mathrm{camera1} \ar[d] \ar[r] & \mathrm{pointset} \\
+\mathrm{camera2} \ar@{-->}[ur]
+}}
+
+Finally, we need to define the parameters of the system.
+
+\begin{verbatim}
+Kparams = logical([1 0 1; 0 1 1; 0 0 0]);
+tweakSpec = {'camera1', 'K', Kparams, [];...
+          'camera2', 'K', Kparams, [];...
+          'camera2', {'r', 't'}, 'all', 1;...
+          'pointset', {'r', 't'}, 'all', 'all'}
+\end{verbatim}
+
+The tweak argument to the solver tells Caliber which parameters of the node 
+can be changed from their supplied values, which we call tweaks.
+\begin{enumerate}
+	\item The first element in each row indicates which node the tweak refers to.
+	\item The second indicates which parameter type(s) can be tweaked.
+	\item The third indicates which axes or coefficients can be tweaked.
+	\item The last element, if not empty, selects which columns of the tweak data can be changed.
+	For extrinsic transformations, each column corresponds to one node state.
+\end{enumerate}
+
+Here we have allowed the 
+focal length and principal point axis elements of the camera matrix to
+to be tweaked, as well as the extrinsic transformation matrices of the second camera and the pointset.
+
+With this, the problem is fully defined, and we can tell Caliber to solve the problem. 
+
+\begin{verbatim}
+[initializer, optimizer] = tree.solve(tweakSpec);
+\end{verbatim}
+
+For how to retrieve and display results, see Section \ref{disp_results}.

@@ -1,0 +1,28 @@
+\section{I/O}
+
+\subsection{\texttt{caliber.io.bouguet}: Bouguet calibration input}
+\texttt{[ imagePoints, worldPoints, Q, data ] = bouguet( resultfile, indices )}
+\paragraph{Overview.} This function reads a \texttt{Calib\_results.mat} file generated
+by a Bouguet calibration and extracts the parameters for a single image.
+Apart from this data, you will also need a tree structure to fully define the problem
+to solve.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{resultfile}: The name of a \texttt{Calib\_results.mat} generated
+		by Bouguet.
+	\item \texttt{indices}: The indices of the images within the file whose parameters are
+		to be retrieved.
+\end{itemize}
+\paragraph{Outputs.}
+\begin{itemize}
+	\item \texttt{imagePoints}: A cell vector of $2 \times n$ arrays of observed image point coordinates.
+	\item \texttt{worldPoints}: A cell vector of $3 \times n$ arrays of corresponding worldspace coordinates,
+		in the pointset's frame.
+	\item \texttt{Q}: A cell vector of estimated transformations between the camera and pointset frames.
+    \item \texttt{data}: A struct containing intrinsic information for the camera.
+\end{itemize}
+\paragraph{Remarks.} 
+	At current Bouguet is the only input format that we have specific code for.
+	Note that Bouguet's convention has $z$ pointing in the direction that 
+	the camera is looking, $y$ pointing downwards, and $x$ to the right from the
+	camera's point of view.

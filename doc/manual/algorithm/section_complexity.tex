@@ -1,0 +1,221 @@
+\section{Initializer complexity}
+
+\subsection{Binary choice via XAX = B}
+
+The core gadget relies on cycles of the form $XAX = B$.
+
+\subsubsection{Background}
+
+\paragraph{Translation given rotations.}
+
+Suppose we know the rotational part of $X$ but not the translational part--denote these by $R_X$ and $t_x$.
+Then solving for the unknown $t_x$ reduces to
+\begin{align}
+	R_X R_A t_x + R_X t_a + t_x = t_b \\
+	\left( R_X R_A + I \right) t_x = t_b - R_X t_a
+\end{align} 
+This has a unique solution as long as $R_X R_A + I$ is invertible. To see when this is the case,
+consider this product for a unit vector $x$:
+\begin{align}
+	x^{-1} \left( R_X R_A + I \right) x = x^{-1} R_X R_A x + 1
+\end{align}
+For any rotation $R$, $x^{-1} R x$ is only $-1$ when $R$ is a 180-degree rotation.
+Otherwise this shows that $R_X R_A + I$ is positive-definite and therefore invertible.
+Thus it can be said that unless $R_X R_A$ is a 180-degree rotation, $t_x$ has a unique solution
+given $R_X$.
+
+\paragraph{Rotations.}
+Inspiration taken from \\
+\texttt{http://www.mathworks.com/matlabcentral/newsreader/view\_thread/165797}
+
+From a single equation we have
+\begin{align}
+	XAX = B \\
+	AXAX = AB \\
+	AX = \left( AB \right)^\frac{1}{2}
+\end{align}
+Suppose we consider only the rotational part. 
+The square root has multiple values; however, since our solution is restricted to 
+$SO \left( 3 \right)$, this limits the possibilities.
+
+\paragraph{The (more) undetermined case.}
+If $R_A R_B = I$, then $I$ and any 180-degree rotation is a possible
+square root. In our two-identical-tablet case, this would correspond to a situation 
+where the two tablets have exactly anti-parallel camera axes.
+
+\paragraph{The common case.}
+Otherwise, $R_A R_B$ has a defined axis of rotation, 
+and $\left( R_A R_B \right)^\frac{1}{2}$ must share that same axis, 
+since applying any rotation twice preserves the axis of 
+rotation. 
+The magnitude of the rotation must be half that of $R_A R_B$,
+plus an integer multiple of $\pi$. Since a difference of $2 \pi$ leaves the rotation matrix unchanged,
+this produces two possible values for $\left( R_A R_B \right)^\frac{1}{2}$ and therefore two possible 
+values for $R_X$.
+
+\subsubsection{A special case}
+
+\label{sec:special}
+Let there exist some label $X$. Suppose we have a cycle that produces an $XAX = B$
+equation. Let the rotational parts of $A$ and $B$ equal
+\begin{align}
+	R_A = R_B = \left[\begin{array}{ccc}
+		0 &  -1 & 0 \\
+		1 & 0 & 0 \\
+		0 & 0 & 1
+	\end{array} \right]
+\end{align}
+
+From this we have
+
+\begin{align}
+	R_X \in \left\{
+		I,
+		I'
+	\right\} \\
+	I = \left[\begin{array}{ccc}
+			1 &  0 & 0 \\
+			0 & 1 & 0 \\
+			0 & 0 & 1
+		\end{array} \right] \\
+	I' = \left[\begin{array}{ccc}
+			-1 &  0 & 0 \\
+			0 & -1 & 0 \\
+			0 & 0 & 1
+		\end{array} \right]
+\end{align}
+
+Now let us examine the translational parts of $A$, $B$, and $X$. Suppose
+
+\begin{align}
+	t_a = \left[\begin{array}{c}
+			0 \\ 0 \\ 0
+		\end{array} \right] \\
+	t_b = \left[\begin{array}{c}
+			b \\ b \\ 0
+		\end{array} \right]
+\end{align}
+
+for some constant $b$. In the case where $R_X = I$, we have
+
+\begin{align}
+	\left( R_X R_A + I \right) t_x = t_b - R_X t_a \\
+	\left( R_A + I \right) t_x = t_b \\
+	\left[\begin{array}{ccc}
+		1 &  -1 & 0 \\
+		1 & 1 & 0 \\
+		0 & 0 & 1
+	\end{array} \right] 
+	t_x = \left[\begin{array}{c}
+			b \\ b \\ 0
+		\end{array} \right] \\
+	t_x = \left[\begin{array}{c}
+			b \\ 0 \\ 0
+		\end{array} \right]
+\end{align} 
+
+In the case where $R_X = I'$, we have
+
+\begin{align}
+	\left( R_X R_A + I \right) t_x = t_b \\
+	\left[\begin{array}{ccc}
+		1 &  1 & 0 \\
+		-1 & 1 & 0 \\
+		0 & 0 & 1
+	\end{array} \right] 
+	t_x = \left[\begin{array}{c}
+			b \\ b \\ 0
+		\end{array} \right] \\
+	t_x = \left[\begin{array}{c}
+			0 \\ b \\ 0
+		\end{array} \right]
+\end{align}
+
+Therefore, in this special case, $X$ either represents a step ``forwards'' of size $b$,
+or a step to the left of size $b$ followed by an about-face. If $b = 0$, then the choice 
+is between standing still and an about-face. Also note that if $b$ is an integer, all
+arithmetic here is integer.
+
+\subsection{Reduction from the (unique) partition problem}
+
+We show a polynomial reduction from the (unique) partition problem to our initializer problem.
+
+\subsubsection{The partition problem}
+
+Recall the partition problem (PP). The definition of the problem is as follows:
+given a set of positive integers $S = \left\{ x_1, x_2, \ldots x_n \right\}$, 
+determine if there exists a subset of the integers $S_1$ such that
+\begin{align}
+	\sum_{x \in S_1} x = \sum_{x \not \in S_1} x
+\end{align}
+
+The standard form of the problem is well-known to be NP-complete; 
+Dieudonne, et al. \cite{Dieudonne2010} show that, given an instance of this problem 
+for which it is guaranteed that at least one solution exists, it is NP-hard
+to determine whether there exists more than one solution.
+They call this version the unique partition problem (UPP).
+
+\subsubsection{The labeled transformation graph problem}
+
+Now consider our initializer problem, which we will call the 
+labeled transformation graph problem (LTGP).
+The uniqueness version (ULTGP) of this problem asks whether, given an instance for LGTP which a solution
+is guaranteed to exist, there exists more than one solution. (We consider swapping a particular choice
+of $S_1$ with its complement in $S$ to be the same solution.)
+
+\subsubsection{The core gadget}
+
+Towards reducing PP to LTGP, we introduce the following gadget. For each $x_i \in S$, we introduce
+two labels $X_i$ and $X_i'$. For both of these we construct an $XAX = B$ cycle of the form
+described in Subsection \ref{sec:special}. For the one with $X_i$, we set $b = x_i$; for the one
+with $X_i'$, we set $b = 0$. This produces four options for the product $X_i X_i'$, corresponding to 
+our choice of picking $R_X = I$ or $R_X = I'$ for each rotational part:
+
+\label{sec:steps}
+\begin{enumerate}
+	\item A step forward of size $x_i$ (choose $R_{X_i} = I$ and $R_{X_i'} = I$).
+	\item A step forward of size $x_i$ followed by an about-face 
+		(choose $R_{X_i} = I$ and $R_{X_i'} = I'$).
+	\item A step left of size $x_i$ (choose $R_{X_i} = I'$ and $R_{X_i'} = I'$).
+	\item A step left of size $x_i$ followed by an about-face (choose $R_{X_i} = I'$ and $R_{X_i'} = I$).
+\end{enumerate}
+
+We put one vertex of each such cycle at the root, so these are the only choices to be made here.
+Since we do constant work per element of $S$, this stage is linear-time.
+
+\subsubsection{A Manhattan walk}
+
+With this set of gadgets in place, we introduce one more cycle, which we will treat as 
+two paths from the root to a destination. On one side we constrain the transformation to the destination
+to equal
+
+\begin{align}
+	T &= \left[\begin{array}{cccc}
+			1 & 0 & 0 & \frac{1}{2} s \\
+			0 & 1 & 0 & \frac{1}{2} s \\
+			0 & 0 & 1 & 0 \\
+			0 & 0 & 0 & 1
+		\end{array} \right] \\
+	\text{where} \ s &= \sum_i^n x_i
+\end{align}
+
+On the other side we have a path of $2n$ edges labeled such that they form the product 
+\begin{align}
+	T = \prod_i^n X_i X_i' = X_1 X_1' X_2 X_2' \ldots X_n X_n'
+\end{align}
+
+Again this is a linear-time transformation.
+
+At each two-edge step towards the destination $X_i X_i'$ 
+a solution must take one of the four options listed in Subsubsection \ref{sec:steps}.
+This constrains our translations to lie only on cardinal directions. Since the Manhattan distance
+to our target is $s$ and we only have a total of $s$ distance in translations in our product,
+this means we must step towards the destination in every step. If we do an about-face 
+before the last step, we will have to step away from the destination on the next step, and if 
+we do an about-face on the last step, we will be facing the wrong direction. Therefore any solution must 
+consist of only options 1 and 3. Since the forward steps total the same as the left steps in any solution,
+this forms a one-to-one correspondence to a solution to PP--the indices of the steps in which we chose to move
+forward correspond to the indices of the integers in the set we select to be in our partition.
+Therefore PP reduces to LTGP, UPP reduces to ULTGP, and the initializer problem and its uniqueness version
+are NP-hard.
+

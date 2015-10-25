@@ -1,0 +1,110 @@
+\section{Nodes}
+\label{sec:nodes}
+
+\subsection{Provided node class}
+
+\subsubsection{\texttt{GeneralNode}: standard 6-dimensional parameterization}
+
+\texttt{node = GeneralNode( name, parentID, data, initialMs )}
+
+\paragraph{Overview.} This node class represents a node with a list of transformations that
+are each either completely known or completely unknown. It is appropriate for solving for 
+general rigid transformations, such as robot arm links and rigid camera separations.
+
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{name}: The name of the node--this should be unique.
+	\item \texttt{parentID}: Specifies the parent of the node. For the root node this should be empty.
+	For other nodes, you can either refer to the parent by name or by handle.
+	\item \texttt{data}: Data to associate with the node. This is a \texttt{struct} with matrices
+	as fields.
+	\item \texttt{initialMs}: A cell array of 4x4 transformation matrices representing the transformations
+	associated with the states of this node. For an initially unknown transformation, use the empty matrix;
+	this will be filled in by the initializer.
+\end{itemize}
+\paragraph{Remarks.}
+\texttt{GeneralNode} parameterizes matrices relative to their initial value using 
+\texttt{data.r} and \texttt{data.t}. Each of these is a $3 \times n$ matrix where each column represents
+one state.
+
+\subsection{Node methods}
+
+If you wish to implement your own observation class, you will want to subclass \\
+\texttt{caliber.node.Node}.
+Then, you will need to implement several methods.
+
+\subsubsection{Standard methods}
+
+\paragraph{\texttt{dData = dData(tweak)}}
+
+Does the same thing as \texttt{tweak.dValues()}.
+
+\paragraph{\texttt{M = relativeM(stateIndices, targetNode, targetStateIndices)}}
+
+Computes the relative transformation matrix between this node and another node.
+
+\begin{itemize}
+    \item \texttt{stateIndices}: The state indices of this node. 
+        Generally you are calling this method on a camera node of an observation, so this argument should be \texttt{observation.cameraStateIndices}.
+    \item \texttt{targetNode}: The target node. Usually this should be \texttt{observation.pointNode}.
+    \item \texttt{targetStateIndices}: The state indices of the target node. Usually this should be \texttt{observation.pointStateIndices}.
+\end{itemize}
+
+\paragraph{\texttt{[dMs, tweakIndices] = dRelativeMs(stateIndices, targetNode, targetStateIndices, tweak)}}
+
+This computes the derivative of M relative to the tweak parameters.
+
+\begin{itemize}
+    \item \texttt{stateIndices}: The state indices of this node. 
+        Generally you are calling this method on a camera node of an observation, so this argument should be \texttt{observation.cameraStateIndices}.
+    \item \texttt{targetNode}: The target node. Usually this should be \texttt{observation.pointNode}.
+    \item \texttt{targetStateIndices}: The state indices of the target node. Usually this should be \texttt{observation.pointStateIndices}.
+    \item \texttt{tweak}: The tweak in question.
+\end{itemize}
+
+\texttt{dMs} is a cell array and \texttt{tweakIndices} is a matrix, both with six elements. Each element \texttt{dMs\{j\}} gives the derivative of the 
+transformation matrix between the two nodes with respect to the \texttt{tweakIndices(j)}th tweakable parameter of the tweak.
+Elements of \texttt{dMs} may be empty matrices, indicating derivatives that are indentically zero; some \texttt{tweakIndices} may be
+repeated, in which case the derivative is the sum of the corresponding elements of \texttt{dMs}.
+
+\paragraph{\texttt{s = getStateString(stateIndices)}}
+
+Gets a string representing the state of this node. May be useful for plot labels.
+\begin{itemize}
+    \item \texttt{stateIndices}: The state indices of this node. 
+        Generally you are calling this method on a node of an observation, so this argument should be \texttt{observation.cameraStateIndices}
+        or \texttt{observation.pointStateIndices}.
+\end{itemize}
+
+\subsubsection{Optional methods}
+None currently.
+
+\subsubsection{Required abstract methods}
+
+\paragraph{\texttt{result = isKnown(obj, stateIndices)}}
+Return true iff the transformation matrix is known for the specified state or all states.
+If \texttt{stateIndices} has one element, return the answer for the \texttt{stateIndices}th element.
+If \texttt{stateIndices} has more than one element, return the answer for the 
+\texttt{stateIndices(obj.index)}th state.
+(\texttt{obj.index} is automatically filled in when the object is assigned to a \texttt{Tree}).
+If \texttt{stateIndices} is not given, return a logical array indicated which states have known 
+transformation matrices.
+
+\paragraph{\texttt{n = numberOfStates(obj)}}
+Return the number of states associated with this node.
+
+\paragraph{\texttt{M = getInitialM(obj, stateIndices)}}
+Return the initial (i.e. pre-optimizer) transformation matrix of the \texttt{stateIndices(obj.index)}th state.
+
+\paragraph{\texttt{setInitialM(obj, index, M)}}
+Set the initial (i.e. pre-optimizer) transformation matrix of the \texttt{stateIndices(obj.index)}th state.
+This is used by the initializer to set estimates for initially unknown transformations.
+
+\paragraph{\texttt{M = M(obj, stateIndices)}}
+Set the ``net'' transformation matrix (i.e. after parameters have been modified) of the \texttt{stateIndices(obj.index)}th state.
+
+\paragraph{\texttt{[dMs, tweakIndices] = dMs(obj, state, tweak)}}
+This should return the derivatives of the transformation matrix of this node for the given state
+and the corresponding tweak indexes. You only need to return 
+the derivatives that are nonzero as the cell array \texttt{dMs} and their corresponding tweak indexes 
+as the array \texttt{tweakIndices}.

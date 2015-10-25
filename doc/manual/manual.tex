@@ -1,0 +1,47 @@
+\documentclass{article}
+\usepackage[all]{xy}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{cite}
+\usepackage{tikz}
+\usepackage{tikz-3dplot}
+
+\addtolength{\oddsidemargin}{-.5in}
+\addtolength{\evensidemargin}{-.5in}
+\addtolength{\textwidth}{1in}
+\title{Caliber v1.0 Manual}
+\author{Albert Liu}
+
+
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+\part{Tutorial}
+\include{tutorial/section_intro}
+\include{tutorial/section_examples}
+% \input{tutorial/section_examples_xml}
+\include{tutorial/section_results}
+
+\part{API reference}
+\include{api/section_io}
+\include{api/section_tree}
+\include{api/section_tweaks}
+\include{api/section_nodes}
+\include{api/section_observations}
+\include{api/section_initializer}
+\include{api/section_optimizer}
+\include{api/section_package}
+
+\part{Algorithm}
+\include{algorithm/section_io.tex}
+\include{algorithm/section_initializer}
+\include{algorithm/section_ax-xb}
+\include{algorithm/section_complexity}
+\include{algorithm/section_optimizer}
+
+%\bibliographystyle{plain}
+%\bibliography{treecal-mail02}
+\end{document}

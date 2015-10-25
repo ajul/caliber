@@ -1,0 +1,200 @@
+\section{Tree}
+
+\subsection{\texttt{caliber.initopt.tree}: problem defintion}
+The \texttt{Tree} class is used to define the problem that you want Caliber to solve.
+It is the class you will probably be working with the most.
+\subsubsection{\texttt{Tree}: constructor}
+\texttt{obj = Tree()}
+\paragraph{Overview.}
+The constructor creates a new \texttt{Tree} instance, which you then specify the problem to
+using the \texttt{addNode} and \texttt{addObservation} methods, described next.
+\paragraph{Inputs.}
+None.
+\paragraph{Outputs.}
+\begin{itemize}
+	\item \texttt{obj}: A new \texttt{Tree} instance.
+\end{itemize}
+\paragraph{Remarks.}
+
+\subsubsection{\texttt{addNode}: add a node to the tree}
+\texttt{addNode(node)}
+\paragraph{Overview.}
+This is one of two methods needed to specify a problem.
+Generally you will add all the desired nodes before specifying observations.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{Node}: The node object to add. Note that the first node that you add
+		is the root of the tree.
+\end{itemize}
+\paragraph{Outputs.}
+None.
+\paragraph{Remarks.}
+Nodes are not meant to be used in massive numbers--if you want to represent large pointsets, 
+enter them as data on a single node and use an observation class such as \\ \texttt{caliber.observation.NodeObservation}.
+
+\subsubsection{\texttt{addObservation}: add an observation to the tree}
+\texttt{addObservation(observation, weight)}
+\paragraph{Overview.} The other method needed to specify the problem.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{observation}: The observation to add. See Section \ref{sec:observations} for details on constructing observations.
+	\item \texttt{weight}: Optional. This controls the weight of the observation
+		in the optimizer. If the weight is 0 it will not be used in finding the solution at all,
+		which is useful for predictions and cross-validation. The default weight is 1.
+\end{itemize}
+\paragraph{Outputs.} None.
+\paragraph{Remarks.}
+
+\subsubsection{\texttt{solve}: solve the problem}
+\texttt{[initializer, optimizer] = solve(tweaks, initializerOptions, optimizerOptions)}
+\paragraph{Overview.}
+After all nodes and observations have been added, this method attempts 
+to find a solution.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{tweaks}: Specifies what parameters are allowed to vary. 
+		See Section \ref{sec:tweaks} for details.
+	\item \texttt{initializerOptions}: Optional. 
+		Options to feed to the initializer. Construct options using 
+		\texttt{caliber.init.initializerOptionsSet}.
+	\item \texttt{optimizerOptions}: Optional. 
+		Options to feed to the internal \texttt{lsqnonlin} in the optimizer.
+		Default options are \texttt{optimset('Jacobian', 'on', 'PlotFcns',
+		 \{@plotOptResNormSemilogY; @plotOptStepSizeSemilogY\});}
+\end{itemize}
+\paragraph{Outputs.}
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{initializer}: An \texttt{Initializer} object that performed the initialization 
+	stage of the problem solution. 
+	See Section \ref{sec:initializer} for details.
+	\item \texttt{optimizer}: An \texttt{Optimizer} object that performed the optimization 
+	stage of the problem solution. 
+	See Section \ref{sec:optimizer} for details.
+\end{itemize}
+
+\paragraph{Remarks.} Allowable options in \texttt{initializerOptionsSet} are:
+\begin{itemize}
+	\item \texttt{MaxDoFPerTransformation}: Maximum number of degrees of freedom for a single solved
+		transformation. If the initializer cannot find a transformation which it can constrain
+		the degrees of freedom below this number, it will report failure. Default is 6, 
+		which will cause the initializer to guess $I$ for transformations if it cannot find 
+		better information.
+	\item \texttt{MaxDoFTotal}: The maximum total number of degrees of freedom in the initializer solution.
+		If this amount would be exceeded, it will report failure. Default is \texttt{inf}, or no limit. 
+	\item \texttt{SecondaryLabels}: The initializer can introduce new labels that represent products
+		of transformations. This can lead to better solution strategies, though at computational cost.
+		Allowed values are \texttt{'None'}, \texttt{'OneSide'} (the default), 
+		\texttt{'BothSides'}, and \texttt{'All'}. The last in particular can be extremely expensive.
+	\item \texttt{Tol}: A number representing how well-conditioned equations must be before the 
+		initializer will consider a particular solution. Higher values result in more rejected
+		equations. Default is 1e-3.
+\end{itemize}
+
+\subsubsection{\texttt{plotPixelErrors}: plot all reprojection errors}
+\texttt{plotPixelErrors(predict)}
+\paragraph{Overview.}
+This plots all reprojection errors, much like Bouguet's \textsf{Analyse error}
+button.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{predict}: Optional. If true, it plots only for zero-weight 
+		observations. Otherwise, it plots only for nonzero-weight observations.
+\end{itemize}
+\paragraph{Outputs.} None.
+\paragraph{Remarks.}
+
+\subsubsection{\texttt{plotExtrinsics}: 3-D plot of camera and pointset transformations}
+\texttt{plotExtrinsics(predict)}
+\paragraph{Overview.}
+This makes a 3-D plot of camera and pointset transformations for each observation.
+These are shown as frames where red, green, and blue lines represent the $x$, $y$,
+and $z$ directions respectively.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{predict}: Optional. If true, it plots only for zero-weight 
+		observations. Otherwise, it plots only for nonzero-weight observations.
+\end{itemize}
+\paragraph{Outputs.} None.
+\paragraph{Remarks.}
+
+\subsubsection{\texttt{plotImagePoints}: plot image points and reprojections}
+\texttt{plotImagePoints(predict)}
+\paragraph{Overview.}
+This makes a plot for each observation of the observed image points and their reprojections.
+These are shown as blue circles and red crosses respectively; corresponding points
+are connected by a black line.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{predict}: Optional. If true, it plots only for zero-weight 
+		observations. Otherwise, it plots only for nonzero-weight observations.
+\end{itemize}
+\paragraph{Outputs.} None.
+\paragraph{Remarks.}
+
+\subsubsection{\texttt{relativeM}: get the relative transformation between two nodes}
+\texttt{M = relativeM(nodefrom, nodeto, statesfrom, statesto)}
+\paragraph{Overview.}
+This computes the relative transformation between two nodes given the current solution.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{nodefrom}: The name of the node to compute the transformation from.
+	\item \texttt{nodeto}: The name of the node to compute transformation to.
+	\item \texttt{statesfrom}: A \texttt{containers.Map} mapping node names to state indices for \texttt{nodefrom}.
+		Nodes with no explicitly specified state are assumed to be in their first state.
+	\item \texttt{statesto}: Optional. A \texttt{containers.Map} mapping node names to state indices for \texttt{statesto}.
+        Defaults to the same as \texttt{statesfrom}.
+\end{itemize}
+\paragraph{Outputs.}
+\begin{itemize}
+	\item \texttt{M}: The relative transformation from \texttt{nodefrom} to \texttt{nodeto},
+		given node states defined by \texttt{statesfrom} and \texttt{statesto}.
+\end{itemize}
+\paragraph{Remarks.}
+
+\subsubsection{\texttt{rootM}: get the transformation between the root and a node}
+\texttt{M = rootM(node, states)}
+\paragraph{Overview.}
+This computes the relative transformation between the root and a node.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{node}: The name of the node to compute the transformation to.
+	\item \texttt{states}: A \texttt{containers.Map} mapping node names to state indices for \texttt{node}.
+		Nodes with no explicitly specified state are assumed to be in their first state.
+\end{itemize}
+\paragraph{Outputs.}
+\begin{itemize}
+	\item \texttt{M}: The relative transformation from the root to \texttt{node},
+		given node states defined by \texttt{states}.
+\end{itemize}
+\paragraph{Remarks.}
+
+\subsubsection{\texttt{nodeM}: get the transformation of one state of a node}
+\texttt{M = nodeM(node, stateIndex)}
+\paragraph{Overview.}
+This returns the transformation of one node in one state relative to its parent.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{node}: The name of the node to compute the transformation on.
+	\item \texttt{stateIndex}: Optional. The index of the state. Defaults to 1.
+\end{itemize}
+\paragraph{Outputs.}
+\begin{itemize}
+	\item \texttt{M}: The transformation of \texttt{node} in state with index \texttt{stateIndex}.
+\end{itemize}
+\paragraph{Remarks.}
+
+\subsubsection{\texttt{nodeData}: get data associated with a node}
+\texttt{data = nodeData(node, paramName)}
+\paragraph{Overview.}
+This returns data associated with a node.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{node}: The name of the node which the data is associated with.
+	\item \texttt{nodeData}: The name of the data to return, e.g. \texttt{'K'} for the camera matrix. 
+\end{itemize}
+\paragraph{Outputs.}
+\begin{itemize}
+	\item \texttt{data}: The data with that name at that node.
+\end{itemize}
+\paragraph{Remarks.}

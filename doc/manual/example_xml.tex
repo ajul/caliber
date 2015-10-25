@@ -1,0 +1,136 @@
+\begin{verbatim}
+<?xml version="1.0"?>
+<root> <!-- root element --> 
+    <nodes> <!-- list of tree nodes --> 
+        <node> <!-- entry for a single node --> 
+            <name>camera1</name> <!-- name of the node --> 
+            <parent>root</parent> <!-- name of the node's parent; 
+            at top level, defaults to root --> 
+            <Ms> <!-- list of transformation matrices -->
+                <matrix> <!-- one matrix --> 
+                    <mr><md>1</md><md>0</md><md>0</md><md>0</md></mr>
+                    <mr><md>0</md><md>1</md><md>0</md><md>0</md></mr>
+                    <mr><md>0</md><md>0</md><md>1</md><md>0</md></mr>
+                    <mr><md>0</md><md>0</md><md>0</md><md>1</md></mr>
+                </matrix>
+            </Ms>
+            <tweaks> <!-- list of tweaks -->
+                <tweak> <!-- one tweak -->
+                    <parameterName>f</parameterName>
+                    <parameterName>pp</parameterName>
+                    <parameterName>kc</parameterName>
+                    <parameterIndex>all</parameterIndex>
+                </tweak>
+            </tweaks>
+            <bouguet> <!-- list of tweaks -->
+            	<resultFile>data/stereo_03/c_results.mat</resultFile>
+            </bouguet>
+            <node>
+                <name>camera2</name> <!-- name of the node's parent; 
+                at below to level, defaults to root --> 
+                <Ms>
+                    <unknown/> <!-- unknown transformation/state -->
+                </Ms>
+                <tweaks>
+                    <tweak>
+                        <parameterName>f</parameterName>
+                        <parameterName>pp</parameterName>
+                        <parameterName>kc</parameterName>
+                        <parameterIndex>all</parameterIndex>
+                    </tweak>
+                    <tweak>
+                        <state>1</state>
+                        <parameterName>r</parameterName>
+                        <parameterName>t</parameterName>
+                        <parameterIndex>all</parameterIndex>
+                    </tweak>
+                </tweaks>
+                <bouguet>
+                    <resultFile>data/stereo_03/m_results.mat</resultFile>
+                </bouguet>
+            </node>
+        </node>
+        <node>
+            <name>pointset</name>
+            <parent>root</parent>
+            <Ms>
+                <unknowns>3</unknowns> <!-- three unknown transformations/states -->
+            </Ms>
+            <tweaks>
+                <tweak>
+                    <state>all</state>
+                    <parameterName>r</parameterName>
+                    <parameterName>t</parameterName>
+                    <parameterIndex>all</parameterIndex>
+                </tweak>
+            </tweaks>
+        </node>
+    </nodes>
+    <observations> <!-- list of observations -->
+        <bouguetSet> <!-- observations taken from Bouguet output -->
+            <camera>camera1</camera> <!-- name of camera node -->
+            <pointset>pointset</pointset> <!-- name of pointset node -->
+            <resultFile>data/stereo_03/c_results.mat</resultFile> <!-- Bouguet file -->
+            <observation> <!-- one observation -->
+                <index>1</index> <!-- index within Bouguet file -->
+                <states> <!-- map of node names -> states -->
+                    <state>
+                        <node>pointset</node>
+                        <stateIndex>1</stateIndex>
+                    </state>
+                </states>
+            </observation>
+            <observation>
+                <index>2</index>
+                <states>
+                    <state>
+                        <node>pointset</node>
+                        <stateIndex>2</stateIndex>
+                    </state>
+                </states>
+            </observation>
+            <observation>
+                <index>3</index>
+                <states>
+                    <state>
+                        <node>pointset</node>
+                        <stateIndex>3</stateIndex>
+                    </state>
+                </states>
+            </observation>
+        </bouguetSet>
+        <bouguetSet>
+            <camera>camera2</camera>
+            <pointset>pointset</pointset>
+            <resultFile>data/stereo_03/m_results.mat</resultFile>
+            <observation>
+                <index>1</index>
+                <states>
+                    <state>
+                        <node>pointset</node>
+                        <stateIndex>1</stateIndex>
+                    </state>
+                </states>
+            </observation>
+            <observation>
+                <index>2</index>
+                <states>
+                    <state>
+                        <node>pointset</node>
+                        <stateIndex>2</stateIndex>
+                    </state>
+                </states>
+            </observation>
+            <observation>
+                <index>3</index>
+                <states>
+                    <state>
+                        <node>pointset</node>
+                        <stateIndex>3</stateIndex>
+                    </state>
+                </states>
+            </observation>
+        </bouguetSet>
+    </observations>
+</root>
+\end{verbatim}

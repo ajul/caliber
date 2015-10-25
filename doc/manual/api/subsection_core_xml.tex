@@ -1,0 +1,74 @@
+\subsection{\texttt{caliber.io.xml}: XML input}
+\subsubsection{XML file structure}
+All items are elements.
+\begin{itemize}
+	\item \texttt{nodes}: A list of nodes.
+	\begin{itemize}
+		\item \texttt{node}: Information about a single node.
+		\begin{itemize}
+			\item \texttt{name}, \texttt{parent}, \texttt{K}, \texttt{kc}:
+				As arguments to \texttt{InitOpt.addNode}. See below for how to specify a matrix.
+				\texttt{parent} is optional.
+			\item \texttt{Ms}: A list of matrices (again, see below), 
+				\texttt{unknown} empty elements, or \texttt{unknowns} elements whose content
+				specifies how many unknown states are to be added.
+			\item \texttt{node}: nodes can be nested; the default parent of a node is 
+				its parent in the XML, or the root if it is at the top level.
+		\end{itemize}
+	\end{itemize}
+	\item \texttt{observations}: A list of observations.
+	\begin{itemize}
+		\item \texttt{observation}: Information about a single observation.
+		\begin{itemize}
+			\item \texttt{camera}, \texttt{pointset}, \texttt{imagePoints}, \texttt{worldPoints},
+				\texttt{Q}, \texttt{weight}:
+				As arguments to \texttt{InitOpt.addObservation}. See below for how to specify a matrix.
+				\texttt{parent} is optional.
+			\item \texttt{states}: A mapping of nodes to states. See below for details.
+		\end{itemize}
+	\end{itemize}
+\end{itemize}
+
+\paragraph{Specifying matrices.} Specify a matrix as in this example:
+\begin{verbatim}
+<matrix>
+    <mr><md>1</md><md>0</md><md>0</md><md>0</md></mr>
+    <mr><md>0</md><md>1</md><md>0</md><md>0</md></mr>
+    <mr><md>0</md><md>0</md><md>1</md><md>0</md></mr>
+    <mr><md>0</md><md>0</md><md>0</md><md>1</md></mr>
+</matrix>
+\end{verbatim}
+
+\paragraph{Specifying states.}
+A \texttt{states} element consists of a list of node states:
+\begin{itemize}
+	\item \texttt{state}: A mapping for a single node.
+	\begin{itemize}
+		\item \texttt{node}, \texttt{stateIndex}: A node name and its corresponding 
+		state index.
+	\end{itemize}
+\end{itemize}
+
+\subsubsection{\texttt{readXML}: reads a XML file into an \texttt{InitOpt} instance}
+\texttt{readXML(initOpt, xmlFile)}
+\paragraph{Overview.}
+This reads an XML file into an existing \texttt{InitOpt} instance.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{initOpt}: The \texttt{InitOpt} instance to read the file into.
+	\item \texttt{xmlFile}: The name of the XML file to read in.
+\end{itemize}
+\paragraph{Outputs.}
+None.
+\paragraph{Remarks.}
+\subsubsection{\texttt{solveXML}: reads a XML file and solves it}
+\texttt{optimizer = solveXML(xmlFile)}
+\paragraph{Overview.}
+This creates a new \texttt{InitOpt} instance, reads in the specified file, solves it, and returns the result.
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{xmlFile}: The name of the XML file to solve.
+\end{itemize}
+\paragraph{Outputs.}
+As \texttt{caliber.initopt.InitOpt.solve()}.
+\paragraph{Remarks.}

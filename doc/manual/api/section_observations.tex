@@ -1,0 +1,180 @@
+\section{Observations} \label{sec:observations}
+
+\subsection{Provided observation classes}
+
+A few observation classes are provided for conventional cameras.
+
+\subsubsection{\texttt{IndependentObservation}: Observation of known 3-D points}
+
+\texttt{observation = IndependentObservation( cameraName, pointName, imagePoints, worldPoints, Q, cameraStates, pointStates )}
+
+\paragraph{Overview.} This observation class represents observations of 3-D points whose positions in the 
+pointset frame are assumed to be perfectly known. It is appropriate for Bouguet-style observations.
+
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{cameraName}: The name of the camera node.
+	\item \texttt{pointName}: The name of the pointset node.
+    \item \texttt{imagePoints}: The observed image points, as a 2 x $n$ matrix.
+    \item \texttt{worldPoints}: The corresponding world points (in the pointset node frame), as a 3 x $n$ matrix.
+    \item \texttt{Q}: An estimate for the relative transformation from the camera node to the pointset node.
+    \item \texttt{cameraStates}: A \texttt{containers.Map} mapping node names to state indices for the camera node. 
+        Nodes with no explicitly specified state are assumed to be in their first state.
+    \item \texttt{pointStates}: Optional. A \texttt{containers.Map} mapping node names to state indices for the pointset node. 
+        Defaults to the same as \texttt{pointStates}.
+\end{itemize}
+\paragraph{Remarks.}
+
+\subsubsection{\texttt{NodeObservation}: Observation of points assoicated with a node}
+
+\texttt{observation = NodeObservation(cameraName, pointName, imagePoints, pointIndices, Q, cameraStates, pointStates) }
+
+\paragraph{Overview.} This observation class represents observations of 3-D points whose positions 
+may be shared between multiple observations and may not be perfectly known. 
+This may be useful if you have point correspondences from a structure-from-motion algorithm.
+
+\paragraph{Inputs.}
+\begin{itemize}
+	\item \texttt{cameraName}: The name of the camera node.
+	\item \texttt{pointName}: The name of the pointset node. The pointset node should have a field \texttt{points} 
+        in its \texttt{data} struct representing world points in that node's frame as a 3 x $n_\mathrm{max}$ matrix.
+    \item \texttt{imagePoints}: The observed image points, as a 2 x $n$ matrix.
+    \item \texttt{pointIndices}: A list of indices, which select $n$ columns of \texttt{pointNode.data.points} that 
+        correspond to observed points.
+    \item \texttt{Q}: An estimate for the relative transformation from the camera node to the pointset node.
+    \item \texttt{cameraStates}: A \texttt{containers.Map} mapping node names to state indices for the camera node. 
+        Nodes with no explicitly specified state are assumed to be in their first state.
+    \item \texttt{pointStates}: Optional. A \texttt{containers.Map} mapping node names to state indices for the pointset node. 
+        Defaults to the same as \texttt{pointStates}.
+\end{itemize}
+\paragraph{Remarks.}
+
+\subsection{Implementing observation classes}
+
+If you wish to implement your own observation class, you will want to subclass \\
+\texttt{caliber.observation.Observation}.
+Then, you will need to implement several methods.
+
+\subsubsection{Optional methods}
+
+\paragraph{\texttt{preSolve(obj, optimizer)}}
+
+This is called before the optimizer calls \texttt{lsqnonlin}. 
+This is a good place to do any precomputation or caching that affects the entire optimzation.
+The default behavior is to query the optimizer for handles to the nodes with names
+\texttt{obj.cameraNodeName} and \texttt{obj.pointNodeName},
+and store them in \texttt{obj.cameraNode} and \texttt{obj.pointNode},
+and to use \texttt{obj.cameraStates} and \texttt{obj.pointStates} to compute a vector 
+that maps node indices to state indices in \texttt{obj.cameraStateIndices}
+and \texttt{obj.pointStateIndices}. 
+You will probably want to call \texttt{preSolve@super(obj, optimizer)}
+if you override this method.
+
+\paragraph{\texttt{plotImagePoints(obj)}}
+
+If you implement this function, it should generate a plot of the image points for this observation.
+
+\paragraph{\texttt{drawExtrinsics(obj, scale)}}
+
+If you implement this function, it should draw a 3-D representation of the observation's extrinsics onto the current plot.
+For example, you might draw three lines for the camera and pointset node frames representing their axes.
+\texttt{scale} gives an idea of how large this representation should be.
+
+\paragraph{\texttt{preIteration(obj)}}
+
+This is called before each iteration of the optimizer, after all node data has been updated. This is a good place to 
+do any precomputation or caching that affects a single iteration.
+
+\subsubsection{Required abstract methods}
+
+\paragraph{Constructor.}
+
+Not technically an abstract method but worth mentioning. You will want to at least set the following inherited members:
+\begin{itemize}
+    \item \texttt{obj.cameraNodeName}: The name of the camera node.
+    \item \texttt{obj.pointNodeName}: The name of the pointset node.
+    \item \texttt{obj.cameraStates}: A \texttt{containers.Map} mapping node names to state indices for the camera node. 
+        Nodes with no explicitly specified state are assumed to be in their first state.
+    \item \texttt{obj.pointStates}: A \texttt{containers.Map} mapping node names to point indices for the camera node. 
+        Nodes with no explicitly specified state are assumed to be in their first state.
+\end{itemize}
+
+\paragraph{\texttt{Q = getQ(obj)}}
+
+This should return an estimate of the relative transformation between the camera and the pointset. Often you will
+compute this externally, pass the estimate as an argument into the observation's constructor, then simply return it for this method.
+
+\paragraph{\texttt{imagePoints = projectedImage(obj)}}
+
+Compute the reprojection for the observation.
+
+\paragraph{\texttt{imageError = reprojectionError(obj)}}
+
+Compute the reprojection error for the observation. The output should be a column vector.
+
+\paragraph{\texttt{errorJacobian = reprojectionErrorJacobian(obj, tweak)}}
+
+Compute the Jacobian of the reprojection error for the observation with respect to the given tweak.
+The output should be a matrix, preferably sparse. 
+The $i$th row of the matrix corresponds to the $i$th element of the value that 
+\texttt{reprojectionError} returns. The $j$th column of the matrix corresponds to the $j$th
+nonzero value of \texttt{tweak.paramIndices}, and thus the matrix has a number of columns
+equal to \texttt{nnz(tweak.paramIndices)}. 
+
+For example, suppose \texttt{tweak.node} matches the camera node of the observation;  
+\texttt{tweak.paramName} is \texttt{'K'}, or the camera matrix;
+and \texttt{tweak.paramIndices} is
+
+\begin{center}\begin{tabular}{ccc}
+    1 & 0 & 3 \\
+    0 & 2 & 4 \\
+    0 & 0 & 0
+\end{tabular}\end{center}
+
+corresponding to the focal length and principal point parameters
+
+\begin{center}\begin{tabular}{ccc}
+    $f_x$ & - & $p_x$ \\
+    - & $f_y$ & $p_y$ \\
+    - & - & -
+\end{tabular}\end{center}
+
+Then the Jacobian for this tweak is
+
+\begin{center}\begin{tabular}{c|cccc}
+    & $f_x$ & $f_y$ & $p_x$ & $p_y$ \\
+	\hline
+	$x_1$ & $\frac{\partial x_1}{\partial f_x}$ & $\frac{\partial x_1}{\partial f_y}$ & $\frac{\partial x_1}{\partial p_x}$ & $\frac{\partial x_1}{\partial p_y}$ \\
+	$y_1$ & $\frac{\partial y_1}{\partial f_x}$ & $\frac{\partial y_1}{\partial f_y}$ & $\frac{\partial y_1}{\partial p_x}$ & $\frac{\partial y_1}{\partial p_y}$ \\
+	$x_2$ & $\frac{\partial x_2}{\partial f_x}$ & $\frac{\partial x_2}{\partial f_y}$ & $\frac{\partial x_2}{\partial p_x}$ & $\frac{\partial x_2}{\partial p_y}$ \\
+	$y_2$ & $\frac{\partial y_2}{\partial f_x}$ & $\frac{\partial y_2}{\partial f_y}$ & $\frac{\partial y_2}{\partial p_x}$ & $\frac{\partial y_2}{\partial p_y}$ \\
+	\vdots & \vdots & \vdots & \vdots & \vdots \\
+	$x_n$ & $\frac{\partial x_n}{\partial f_x}$ & $\frac{\partial x_n}{\partial f_y}$ & $\frac{\partial x_n}{\partial p_x}$ & $\frac{\partial x_n}{\partial p_y}$ \\
+	$y_n$ & $\frac{\partial y_n}{\partial f_x}$ & $\frac{\partial y_n}{\partial f_y}$ & $\frac{\partial y_n}{\partial p_x}$ & $\frac{\partial y_n}{\partial p_y}$
+\end{tabular}\end{center}
+
+where $\left( x_i, y_i \right)$ are the coordinates of the $i$th image point. Note that the order of the columns corresponds to the order of the nonzero
+entries of \texttt{tweak.paramIndices}.
+
+See Sections \ref{sec:tweaks} and \ref{sec:nodes} for details on accessing and computing 
+tweak and node information.
+
+\subsubsection{\texttt{StandardObservation}: conventional cameras}
+
+If you are using a conventional camera, you may want to subclass \\
+\texttt{caliber.observation.StandardObservation}
+instead. This subclass implements most of the abstract methods of \\
+\texttt{caliber.observation.Observation}, leaving
+just the constructor and two new abstract functions to implement. 
+Additionally, it caches the standard intrinsic and extrinsic parameters in \texttt{obj.M}, \texttt{obj.kc}, and \texttt{obj.K}
+in \texttt{preIteration()} so you can look those up directly.
+
+\paragraph{\texttt{points = getPoints(obj)}}
+
+This method should return a set of 3-D points as a 3 x $n$ matrix.
+
+\paragraph{\texttt{J = nonstandardJacobian(obj, tweak)}}
+
+This method should compute the Jacobian of the image points with respect to a tweak
+whose \texttt{paramName} is not one of \texttt{'K'}, \texttt{'kc'}, \texttt{'r'}, or \texttt{'t'}
+(these cases are taken care of by \texttt{StandardObservation}).
