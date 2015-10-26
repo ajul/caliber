@@ -3,7 +3,7 @@ function fullySolved = solve( obj, options )
     tStart = tic;
     
     if nargin < 2
-        options = caliber.init.optionsSet);
+        options = caliber.init.optionsSet();
     end
     
     obj.solvePre(options);

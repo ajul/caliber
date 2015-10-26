@@ -1,7 +1,7 @@
 function [ X ] = solveParallelTranslation(ta, tb)
 %SOLVEPARALLELTRANSLATION Summary of this function goes here
 %   Detailed explanation goes here
-    R = caliber.math.ax_x.solveRotation1DoF(ta, tb);
+    R = caliber.math.ax_xb.solveRotation1DoF(ta, tb);
     
     if isempty(R)
         X = [];

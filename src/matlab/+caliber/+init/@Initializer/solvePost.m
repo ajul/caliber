@@ -2,7 +2,7 @@ function solvePost( obj )
 %SOLVEPOST Summary of this function goes here
 %   Detailed explanation goes here
     for i = 1:length(obj.tree.nodeList)
-        node = obj.tree.ndeList{i};
+        node = obj.tree.nodeList{i};
         for j = 1:node.numberOfStates()
             if ~node.isKnown(j)
                 xfname = sprintf('%s:%d', node.name, j);
