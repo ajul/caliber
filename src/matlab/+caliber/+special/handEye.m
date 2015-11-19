@@ -32,6 +32,7 @@ function [tree, initializer, optimizer] = handEye( datafile, armMatrices, doLooc
     tree.addNode(caliber.node.GeneralNode('camera', 'hand', data, {[]}));
     
     for i = 1:numImages
+        % The last argument is a map from nodes to states. Here we say that the hand node is in its ith state during the ith observation.
         observation = caliber.observation.IndependentObservation('camera', 'pointset', imagePoints{i}, worldPoints{i}, Q{i}, ...
             Map({'hand'}, {i}));
         tree.addObservation(observation);
