@@ -22,6 +22,11 @@ function [tree, initializer, optimizer] = handEye( datafile, armMatrices, doLooc
     tree = caliber.tree.Tree();
     tree.addNode(caliber.node.GeneralNode('root', [], struct(), {}));
     
+    % The first argument is the name of the node being added.
+    % The second argument is the name of the parent node.
+    % The third argument is any intrinsic data associated with the node.
+    % The fourth argument is a list of states represented by transformation matrices relative to the parent. 
+    % An empty matrix represents an unknown transformation.
     tree.addNode(caliber.node.GeneralNode('pointset', 'root', struct(), {[]}));
     tree.addNode(caliber.node.GeneralNode('hand', 'root', struct(), armMatrices));
     tree.addNode(caliber.node.GeneralNode('camera', 'hand', data, {[]}));
